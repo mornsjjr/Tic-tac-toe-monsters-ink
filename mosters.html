@@ -1,0 +1,417 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Tic Tac Toe — Monsters Neon Edition</title>
+
+<link href="https://fonts.googleapis.com/css2?family=Luckiest+Guy&display=swap" rel="stylesheet">
+
+<style>
+body {
+    margin: 0;
+    font-family: 'Segoe UI', sans-serif;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 100vh;
+    background: url('https://i.ibb.co/Rk072Qm6/w1500-48941316.jpg') no-repeat center center fixed;
+    background-size: cover;
+    position: relative;
+    color: white;
+    overflow: hidden;
+}
+
+body::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: rgba(0,0,0,0.65);
+    backdrop-filter: blur(6px);
+    z-index: 0;
+}
+
+body > * { position: relative; z-index: 1; }
+
+h1 {
+    margin-bottom: 20px;
+    font-size: 2.3rem;
+    text-shadow: 0 0 20px #00f7ff;
+}
+
+/* ===== Layout ===== */
+
+.game-container {
+    display: flex;
+    align-items: center;
+    gap: 100px;
+    perspective: 1200px;
+}
+
+/* ===== Side Players ===== */
+
+.side-player {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    opacity: 0.5;
+    transition: 0.4s ease;
+    font-family: 'Luckiest Guy', cursive;
+    font-size: 1.5rem;
+    text-shadow: 0 0 15px rgba(255,255,255,0.8);
+}
+
+/* 🔥 Очень большие круглые персонажи */
+.side-player img {
+    width: 260px;
+    height: 260px;
+    border-radius: 50%;
+    object-fit: cover;
+    margin-bottom: 20px;
+
+    border: 6px solid rgba(255,255,255,0.3);
+
+    box-shadow:
+        0 15px 40px rgba(0,0,0,0.6),
+        inset 0 0 25px rgba(255,255,255,0.25);
+
+    backdrop-filter: blur(15px);
+    transition: 0.4s ease;
+}
+
+/* Пульс */
+@keyframes pulseGlow {
+    0% { transform: scale(1.05); }
+    50% { transform: scale(1.12); }
+    100% { transform: scale(1.05); }
+}
+
+.side-player.active {
+    opacity: 1;
+}
+
+.side-player.active img {
+    animation: pulseGlow 1.8s infinite ease-in-out;
+}
+
+#playerX.active img {
+    border-color: #39ff14;
+    box-shadow: 0 0 40px #39ff14, 0 0 100px #39ff14;
+}
+
+#playerO.active img {
+    border-color: #00e5ff;
+    box-shadow: 0 0 40px #00e5ff, 0 0 100px #00e5ff;
+}
+
+/* ===== Board ===== */
+
+#board {
+    display: grid;
+    grid-template-columns: repeat(3, 120px);
+    grid-template-rows: repeat(3, 120px);
+    gap: 18px;
+    padding: 30px;
+    border-radius: 30px;
+
+    background: rgba(255,255,255,0.08);
+    backdrop-filter: blur(15px);
+
+    box-shadow: 
+        0 0 30px rgba(0,255,255,0.4),
+        0 0 80px rgba(0,255,255,0.2);
+
+    animation: boardGlow 4s infinite alternate ease-in-out;
+}
+
+@keyframes boardGlow {
+    from { box-shadow: 0 0 30px rgba(0,255,255,0.3), 0 0 60px rgba(0,255,255,0.2); }
+    to { box-shadow: 0 0 60px rgba(57,255,20,0.5), 0 0 120px rgba(0,229,255,0.4); }
+}
+
+/* ===== Cells ===== */
+
+.cell {
+    width: 120px;
+    height: 120px;
+
+    background: rgba(255,255,255,0.28);
+    backdrop-filter: blur(18px);
+    border-radius: 24px;
+    border: 1px solid rgba(255,255,255,0.4);
+
+    box-shadow:
+        0 8px 32px rgba(0,0,0,0.4),
+        inset 0 0 12px rgba(255,255,255,0.3);
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: transform 0.25s ease, background 0.3s ease;
+    transform-style: preserve-3d;
+}
+
+.cell:hover {
+    background: rgba(255,255,255,0.38);
+    transform: scale(1.05);
+}
+
+/* 3D Tilt */
+.cell.tilt {
+    transform: rotateX(var(--rotateX)) rotateY(var(--rotateY)) scale(1.05);
+}
+
+.neon-x {
+    font-size: 4rem;
+    font-weight: 900;
+    color: #39ff14;
+    text-shadow: 0 0 10px #39ff14, 0 0 25px #39ff14, 0 0 50px #39ff14;
+}
+
+.neon-o {
+    font-size: 4rem;
+    font-weight: 900;
+    color: #00e5ff;
+    text-shadow: 0 0 10px #00e5ff, 0 0 25px #00e5ff, 0 0 50px #00e5ff;
+}
+
+.pop { animation: pop 0.3s ease; }
+
+@keyframes pop {
+    0% { transform: scale(0); }
+    70% { transform: scale(1.3); }
+    100% { transform: scale(1); }
+}
+
+.cell.win {
+    animation: winGlow 1s infinite alternate;
+}
+
+@keyframes winGlow {
+    from { box-shadow: 0 0 10px gold; }
+    to { box-shadow: 0 0 40px gold; }
+}
+
+.word {
+    font-size: 1rem;
+    text-align: center;
+}
+
+.fade-out {
+    animation: fadeOut 0.3s forwards;
+}
+
+@keyframes fadeOut {
+    from { opacity: 1; transform: scale(1); }
+    to { opacity: 0; transform: scale(0.7); }
+}
+
+#status {
+    font-size: 1.3rem;
+    margin-top: 20px;
+    min-height: 30px;
+    font-family: 'Luckiest Guy', cursive;
+}
+
+button {
+    margin-top: 10px;
+    padding: 12px 28px;
+    font-size: 1rem;
+    border-radius: 30px;
+    border: none;
+    cursor: pointer;
+    background: linear-gradient(45deg, #39ff14, #00e5ff);
+    color: black;
+    font-weight: bold;
+    transition: 0.3s;
+}
+
+button:hover { transform: scale(1.08); }
+
+#overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.85);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 10;
+}
+
+#overlay.hidden { display: none; }
+
+.overlay-content {
+    text-align: center;
+    animation: pop 0.4s ease;
+}
+
+.overlay-content h2 {
+    font-size: 3rem;
+    margin-bottom: 20px;
+    text-shadow: 0 0 25px gold;
+}
+</style>
+</head>
+<body>
+
+<h1>Monsters Tic Tac Toe</h1>
+
+<div class="game-container">
+
+    <div id="playerX" class="side-player active">
+        <img src="https://i.ibb.co/G3NLyTgz/1.png">
+        <div>Mike</div>
+    </div>
+
+    <div id="board"></div>
+
+    <div id="playerO" class="side-player">
+        <img src="https://i.ibb.co/0RGS09Vk/2.png">
+        <div>Sully</div>
+    </div>
+
+</div>
+
+<div id="status">Mike's turn</div>
+<button onclick="resetGame()">Restart Game</button>
+
+<div id="overlay" class="hidden">
+    <div class="overlay-content">
+        <h2 id="winnerText"></h2>
+        <button onclick="resetGame()">Play Again</button>
+    </div>
+</div>
+
+<script>
+const words = [
+    "always","usually","at the moment",
+    "every day","never","tonight",
+    "often","sometimes","once a week"
+];
+
+const board = document.getElementById('board');
+const statusText = document.getElementById('status');
+const playerXDiv = document.getElementById('playerX');
+const playerODiv = document.getElementById('playerO');
+const overlay = document.getElementById('overlay');
+const winnerText = document.getElementById('winnerText');
+
+let currentPlayer = 'X';
+let cells = Array(9).fill(null);
+let gameActive = true;
+
+function createBoard() {
+    board.innerHTML = '';
+    words.forEach((word, index) => {
+        const cell = document.createElement('div');
+        cell.classList.add('cell');
+
+        const span = document.createElement('span');
+        span.classList.add('word');
+        span.textContent = word;
+
+        cell.appendChild(span);
+        cell.addEventListener('click', () => makeMove(index));
+
+        cell.addEventListener('mousemove', e => {
+            const rect = cell.getBoundingClientRect();
+            const x = e.clientX - rect.left;
+            const y = e.clientY - rect.top;
+            const rotateX = ((y / rect.height) - 0.5) * -20;
+            const rotateY = ((x / rect.width) - 0.5) * 20;
+            cell.style.setProperty('--rotateX', rotateX + 'deg');
+            cell.style.setProperty('--rotateY', rotateY + 'deg');
+            cell.classList.add('tilt');
+        });
+
+        cell.addEventListener('mouseleave', () => {
+            cell.classList.remove('tilt');
+        });
+
+        board.appendChild(cell);
+    });
+}
+
+function makeMove(index) {
+    if (!gameActive || cells[index]) return;
+
+    const cell = board.children[index];
+    const wordSpan = cell.querySelector('.word');
+
+    cells[index] = currentPlayer;
+    wordSpan.classList.add('fade-out');
+
+    setTimeout(() => {
+        cell.innerHTML = currentPlayer;
+        cell.classList.add('pop');
+        cell.classList.add(currentPlayer === 'X' ? 'neon-x' : 'neon-o');
+    }, 300);
+
+    setTimeout(() => {
+        if (checkWinner()) {
+            gameActive = false;
+            winnerText.textContent =
+                currentPlayer === 'X' ? '🏆 Mike Wins!' : '🏆 Sully Wins!';
+            overlay.classList.remove('hidden');
+            return;
+        }
+
+        if (!cells.includes(null)) {
+            gameActive = false;
+            winnerText.textContent = "🤝 It's a Draw!";
+            overlay.classList.remove('hidden');
+            return;
+        }
+
+        currentPlayer = currentPlayer === 'X' ? 'O' : 'X';
+        updateActivePlayer();
+    }, 320);
+}
+
+function updateActivePlayer() {
+    if (currentPlayer === 'X') {
+        statusText.textContent = "Mike's turn";
+        playerXDiv.classList.add('active');
+        playerODiv.classList.remove('active');
+    } else {
+        statusText.textContent = "Sully's turn";
+        playerODiv.classList.add('active');
+        playerXDiv.classList.remove('active');
+    }
+}
+
+function checkWinner() {
+    const patterns = [
+        [0,1,2],[3,4,5],[6,7,8],
+        [0,3,6],[1,4,7],[2,5,8],
+        [0,4,8],[2,4,6]
+    ];
+
+    for (let pattern of patterns) {
+        const [a,b,c] = pattern;
+        if (cells[a] && cells[a] === cells[b] && cells[a] === cells[c]) {
+            pattern.forEach(i => board.children[i].classList.add('win'));
+            return true;
+        }
+    }
+    return false;
+}
+
+function resetGame() {
+    currentPlayer = 'X';
+    cells = Array(9).fill(null);
+    gameActive = true;
+    overlay.classList.add('hidden');
+    statusText.textContent = "Mike's turn";
+    playerXDiv.classList.add('active');
+    playerODiv.classList.remove('active');
+    createBoard();
+}
+
+createBoard();
+</script>
+
+</body>
+</html>
